@@ -119,62 +119,69 @@ to check anything.
 
 | Program | Presses made | Presses counted | LED reacted right away? |
 |---|---|---|---|
-| `polling_led_toggle` | 10 | | |
-| `irq_led_toggle` | 10 | | |
+| `polling_led_toggle` | 10 | 3|No (only when main sampled every 500 ms) |
+| `irq_led_toggle` | 10 |10 |Yes (instant response inside ISR) |
 
 ### Checklist
 
-- [ ] `polling_led_toggle` builds and runs; 10-press test recorded
-- [ ] `irq_led_toggle` TODO 1 and 2 filled in; 10-press test recorded
-- [ ] TODO 3 filled in; the program still counts correctly
+- [x] `polling_led_toggle` builds and runs; 10-press test recorded
+- [x] `irq_led_toggle` TODO 1 and 2 filled in; 10-press test recorded
+- [x] TODO 3 filled in; the program still counts correctly
 
 **Why did `polling_led_toggle` miss presses? How long does a press have to last to be sure the
 polling version sees it?**
 
 > _Answer:_
->
+>polling_led_toggle missed presses because main() spends 500 ms sleeping (WORK_MS) between pin checks. Any button press that starts and ends entirely within that 500 ms sleep window is completely missed by gpio_get(). For the polling version to reliably see a press, the button must stay pressed for at least 500 ms so that the pin is guaranteed to be HIGH at the exact moment gpio_get() runs.
 
 **In `irq_led_toggle`, the LED reacts at once, but the printed count still shows up late.
 Why?**
 
 > _Answer:_
->
+>The LED toggle logic runs immediately inside the Interrupt Service Routine (button_isr), which fires hardware-level execution instantly on a pin edge. However, the std::cout print statement runs inside main(), which only wakes up every 500 ms to read take_pending_presses().
 
 **Why is printing kept out of `button_isr()`? What could go wrong if the ISR took, say,
 100 ms?**
 
 > _Answer:_
->
+>Answer:
+Printing operations (like printf or std::cout) are slow and perform blocking I/O transfers over USB/UART. Keeping ISRs extremely brief prevents blocking other hardware interrupts. If an ISR took 100 ms, the CPU would be locked in interrupt mode, delaying other hardware events, dropping high-speed peripheral data, and causing severe real-time latency.
 
 **`pending_presses` is declared `volatile`. What could the compiler do with the loop in
 `main()` if it wasn't?**
 
 > _Answer:_
->
+>Without volatile, the compiler optimizer assumes g_pending_presses is never modified because it sees no code writing to it inside main(). It might optimize the variable away entirely or cache its value in a CPU register, causing main() to permanently read 0 and never notice when the ISR increments it.
 
 **Describe, step by step, how a press gets lost in `take_pending_presses()` without TODO
 3. Why does the book restore the *saved* interrupt state at the end, instead of simply
 switching interrupts back on?**
 
 > _Answer:_
->
+>1. main() calls take_pending_presses() and reads g_pending_presses (e.g., value = 1) into local variable count.
+
+2. Right before main() executes g_pending_presses = 0;, a button press occurs, triggering button_isr(), which increments g_pending_presses to 2.
+
+3. The ISR finishes and yields back to main(), which proceeds with its next line: g_pending_presses = 0;. The newly incremented count is overwritten and lost.
+
+The code restores save_and_disable_interrupts() status because take_pending_presses() might be called from inside a function that had already intentionally disabled interrupts. Simply calling interrupts_enable() would incorrectly re-enable interrupts prematurely and break the surrounding critical section.
 
 **Give one example, outside this exercise, where polling is the better choice, and say
 why.**
 
 > _Answer:_
->
+>Periodically reading a slow-changing environmental sensor, such as a room temperature or ambient light sensor every 10 seconds. Polling is better here because temperature changes slowly, interrupts are unnecessary for non-urgent periodic samples, and polling keeps the control flow simple without overhead.
 
 **Give one example where an interrupt is the only workable choice, and polling would be
 unsafe or useless.**
 
 > _Answer:_
->
+>An Emergency Stop (E-Stop) button or an optical rotary encoder on a high-speed motor. Polling would be unsafe or useless because missing a sub-millisecond edge transition could result in mechanical damage or miscounted position steps.
 
 **Attached file(s):**
 
 > _Filename:_
->
+>irq_led_toggle.cpp
 
 *Read more (optional): Programming Embedded Systems, Chapter 8 (Sect. 8.3, "Interrupt
 Service Routine", and 8.3.1, "Shared Data and Race Conditions"), and Real-Time C++,
@@ -238,37 +245,39 @@ a second.](img/square-wave.svg)
 
 ### Checklist
 
-- [ ] TODO 1 and 2 filled in; LED blinks from the timer
-- [ ] TODO 3 filled in; melody plays while the LED blinks
+- [x] TODO 1 and 2 filled in; LED blinks from the timer
+- [x] TODO 3 filled in; melody plays while the LED blinks
 
 **The LED and the buzzer use the same `toggle_callback()`. How does it know which pin to
 toggle each time it's called?**
 
 > _Answer:_
->
+>When registering each repeating timer via add_repeating_timer_*(), a pointer to its specific Toggler instance (&led or &speaker/&buzzer) is passed to user_data. Inside toggle_callback(), t->user_data is cast back to Toggler*, allowing the callback to read toggler->pin and toggle that specific hardware pin.
 
 **Why does `add_repeating_timer_ms()` take a `void*` and not a `Toggler*`? What would
 happen if you gave it a pointer to something that isn't a `Toggler`?**
 
 > _Answer:_
->
+>add_repeating_timer_ms() takes a void* so the C SDK can accept arbitrary user-defined context structs without forcing a specific data type. If a non-Toggler pointer is passed, casting it to Toggler* inside toggle_callback() causes undefined behavior, as the callback will read garbage memory locations as pin, level, and toggles.
 
 **The button in Exercise 1 interrupts the CPU when a pin changes. Nothing changes on a
 pin here, so what triggers the interrupt instead, and what is doing the triggering?**
 
 > _Answer:_
->
+>The RP2040 hardware timer peripheral triggers the interrupt. Its internal 64-bit microsecond counter hardware counts continuously; when it matches a target alarm hardware register scheduled by add_repeating_timer_*(), it raises an alarm interrupt to run toggle_callback().
 
 **For the note E4 (330 Hz), what is `half_period_us`, and how many times per second does
 `toggle_callback()` run?**
 
 > _Answer:_
->
+>For note E4 (330HZ): half_perioud_us = 1000000/2 * 330 =1550
+> toggle_callback() runs 660 times per second ($2 \times 330$), because making one complete square wave vibration cycle requires two pin toggles.
+  
 
 **Attached file(s):**
 
 > _Filename:_
->
+>timer_music.cpp
 
 *Read more (optional): Programming Embedded Systems, Sect. 8.4 ("The Improved Blinking
 LED Program"), Real-Time C++, Sect. 9.3 ("Implementing a System-Tick"), and Beginning
@@ -316,21 +325,21 @@ This game is based on Tommy Nielsen's reaction time game from last year's course
 
 | Player | Best of 10 (ms) |
 |---|---|
-| | |
-| | |
+|Marius |186ms |
+| Max|La mare in grecia ska |
 
 ### Checklist
 
-- [ ] TODO 1 filled in; the game runs
-- [ ] Early press tried before and after TODO 2
-- [ ] `POLL_MS = 500` tried and compared
-- [ ] Best times recorded and submitted to the form
+- [x] TODO 1 filled in; the game runs
+- [x] Early press tried before and after TODO 2
+- [x] `POLL_MS = 500` tried and compared
+- [x] Best times recorded and submitted to the form
 
 **What was printed for an early press before you added TODO 2? Why that number? (Hint:
 Session 3, `number = 256`.)**
 
 > _Answer:_
->
+>Before adding TODO 2, an early press caused the program to compute g_round.press_us - g_round.start_us where start_us was still 0. Because press_us was a huge 64-bit integer timestamp and start_us was 0, it printed a massive, nonsensical reaction time (or an underflowed negative calculation wrapped around as an unsigned integer) rather than recognizing a false start.
 
 **Did your reaction times change when `POLL_MS` went from 50 to 500? Did the "noticed"
 lag change? If the stop time were taken in `main()` right after the
@@ -338,25 +347,31 @@ lag change? If the stop time were taken in `main()` right after the
 at `POLL_MS = 50`, and at `500`?**
 
 > _Answer:_
->
+>The measured reaction times did not change because the time measurement was captured immediately inside button_isr() at the moment of the hardware interrupt. However, the "noticed" lag in main() increased significantly from 0–50 ms to 0–500 ms.
+
+If the stop time were recorded in main() instead of the ISR:
+
+At POLL_MS = 50, it would add an error of up to 50 ms.
+
+At POLL_MS = 500, it would add an error of up to 500 ms.
 
 **Exercise 1 needed a critical section for `pending_presses`, but `main()` reads
 `round_state` here without one. What is different? (Look at who writes each field, and
 when.)**
 
 > _Answer:_
->
+>In Exercise 1, main() was reading and resetting a counter (g_pending_presses = 0) that the ISR could concurrently increment, creating a read-modify-write race condition. In Exercise 3, main() and the ISR never perform competing read-modify-write operations on the same field: the ISR only writes press_us and sets pressed = true once per round, and main() only reads press_us after pressed has already been set.
 
 **Name one thing that still makes the measured time differ from your real reaction time,
 even with the ISR.**
 
 > _Answer:_
->
+>Mechanical switch contact bounce and tactile button travel time (the physical time it takes for the switch contacts to close after your finger starts pushing down).
 
 **Attached file(s):**
 
 > _Filename:_
->
+>reaction_game.cpp
 
 *Read more (optional): Real-Time C++, Sect. 3.14 ("atomic_load() and atomic_store()")
 and 6.10 ("Use Native Integer Types").*

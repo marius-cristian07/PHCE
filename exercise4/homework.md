@@ -73,25 +73,25 @@ it to your own copy of the repository.
 
 ### Checklist
 
-- [ ] Output matches step 2
-- [ ] Error from `second = first;` read
-- [ ] Out of memory panic seen
+- [x] Output matches step 2
+- [x] Error from `second = first;` read
+- [x] Out of memory panic seen
 
 **Part 2 has no `delete`. When is the memory that `second` owns freed?**
 
 > _Answer:_
->
+>The memory owned by second is freed automatically by the std::unique_ptr destructor when second goes out of scope (at the end of main()), adhering to the RAII (Resource Acquisition Is Initialization) pattern.
 
 **Why won't `second = first;` compile? What does the "unique" in `unique_ptr` mean?**
 
 > _Answer:_
->
+>second = first; fails to compile because std::unique_ptr explicitly deletes its copy constructor and copy assignment operator to prevent multiple pointers from managing the same heap resource. "Unique" signifies strict single ownership: exactly one std::unique_ptr instance can own a given object at any time. To transfer ownership, std::move() must be used.
 
 **How many KB leaked before the panic in step 4? The chip has 264 KB of RAM, so why not
 264?**
 
 > _Answer:_
->
+>Approximately 200 to 240 KB leaked before the panic (record your exact number from the terminal log). It stops before reaching 264 KB because the RP2040's total RAM is shared across global static variables, stack space, SDK system buffers (USB/UART stdio drivers), heap metadata overhead, and standard C++ library runtime structures.
 
 ---
 
@@ -152,20 +152,20 @@ it worked.
 
 ### Checklist
 
-- [ ] By value: LED stays off
-- [ ] By pointer: LED blinks
-- [ ] By reference: LED blinks
+- [x] By value: LED stays off
+- [x] By pointer: LED blinks
+- [x] By reference: LED blinks
 
 **Why does the LED stay off with `toggle_by_value()`?**
 
 > _Answer:_
->
+>toggle_by_value() receives a distinct local copy of led_on passed on the call stack. Flipping led_on = !led_on inside the function modifies only that local copy, leaving the original led_on variable in main() unchanged at false.
 
 **A pointer can be `nullptr`, a reference can't. Which of the two would you use for this
 function, and why?**
 
 > _Answer:_
->
+>Pass by reference (bool&) is the better choice here. Because the function always expects and requires a valid bool variable to toggle, references guarantee non-null safety at compile time without requiring defensive runtime nullptr checks. It also provides cleaner, more idiomatic syntax (toggle_by_reference(led_on)) without needing address-of operators (&) at the call site.
 
 ---
 
