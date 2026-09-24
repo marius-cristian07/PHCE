@@ -93,17 +93,17 @@ unfiltered, that flicker would report one physical press as several presses to y
 the difference between `reading` and `stable_state` in your program, and why do you need
 both?**
 
-> _Answer:_
+> _Answer: One physical button press produced multiple raw lines (typically 2 to 5 due to contact chatter/bounce), but produced exactly one pressed line and one released line. reading represents the immediate, un-filtered electrical state read directly from the pin at this exact millisecond. stable_state represents the debounced logic state that has remained unchanged for at least DEBOUNCE_MS milliseconds. Both are needed because reading tracks real-time pin updates to detect when electrical activity starts, while stable_state filters out transient noise spikes and chatter before passing clean state transitions to application code.
 >
 
 **What happened with `DEBOUNCE_MS = 0`, and why?**
 
-> _Answer:_
+> _Answer: Setting DEBOUNCE_MS = 0 disabled the debounce timer constraint completely ((now_ms - last_change_ms) >= 0 is always true). Consequently, mechanical switch contact chatter immediately triggered multiple duplicate pressed and released state changes for a single physical button tap.
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename:_ button_edges.cpp
 >
 
 ---
@@ -179,11 +179,15 @@ if the C/C++ boundary isn't declared correctly.
 actually tell the compiler to do, and why does `LedController` itself never need to know
 about it?**
 
-> _Answer:_
+> _Answer: The linker failed with an undefined reference to 'led_set(unsigned int, int)' error.
+
+extern "C" instructs the C++ compiler to disable C++ name mangling (function name decoration used to support method overloading) for that function, keeping its raw un-mangled symbol name in the object file (e.g., plain led_set). This allows the C++ code to link against C source code compiled by a standard C compiler, which does not mangle names.
+
+LedController never needs to know about extern "C" because it simply invokes led_set() as a normal C++ function call. The language linkage specification applies solely at the declaration of the function signature itself, hiding the interop boundary from higher-level caller code.
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename:_ c_interop.cpp, gpio_driver.c
 >
 
