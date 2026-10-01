@@ -69,28 +69,28 @@ same.
 | Line | `x` | `y` |
 |---|---|---|
 | start | 1 | 2 |
-| by value | | |
-| by pointer | | |
-| by reference | | |
+| by value |1 |2 |
+| by pointer | 2|1 |
+| by reference |1 |2 |
 
 ### Checklist
 
-- [ ] TODO 1 and 2 filled in
-- [ ] Table filled in
+- [x] TODO 1 and 2 filled in
+- [x] Table filled in
 
 **Why did `swap_by_value()` not swap?**
 
-> _Answer:_
+> _Answer: When passing parameters by value, the function receives independent copies of the original variables (a and b). The swap logic successfully swapped those local temporary copies inside the function's stack frame, but left the original x and y variables in main() untouched._
 >
 
 **The last line shows `x = 1` again. Why?**
 
-> _Answer:_
+> _Answer: Before swap_by_reference(x, y) was called, swap_by_pointer(&x, &y) had already swapped x and y in memory, making x = 2 and y = 1. Calling swap_by_reference(x, y) performed a second swap directly on the variables, returning x back to 1 (and y back to 2)._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename:_ swap.cpp
 >
 
 ---
@@ -162,17 +162,17 @@ when to stop.
 
 **What does the base case in `sum_to()` do?**
 
-> _Answer:_
+> _Answer:_ The base case checks if n has reached 0 and returns 0 directly. This stops the function from calling itself endlessly, ending the recursion so the values on the stack can return and sum together.
 >
 
 **What happened in step 6? Why?**
 
-> _Answer:_
+> _Answer:_ The program printed continuously into negative numbers (0, -1, -2, ...) and then crashed or froze. Without a base case to stop execution, countdown() called itself endlessly until it ran out of stack RAM memory (causing a stack overflow).
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename:_ recursion.cpp
 >
 
 ---

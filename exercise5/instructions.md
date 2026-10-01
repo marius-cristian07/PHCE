@@ -40,36 +40,36 @@ change the same way.
 
 | Knob | `raw` | volts | ohms |
 |---|---|---|---|
-| fully left | | | |
-| middle | | | |
-| fully right | | | |
+| fully left |0 | 0.0| 0|
+| middle | 2047|1.65 | 5000|
+| fully right | 4095|3.3 | 10000|
 
 `raw` jumps by about ___ steps with the knob still. The 9-bit value jumps by ___.
 
 ### Checklist
 
-- [ ] TODO 1 and 2 filled in
-- [ ] Table filled in
-- [ ] Jumps noted, 12-bit and 9-bit
+- [x] TODO 1 and 2 filled in
+- [x] Table filled in
+- [x] Jumps noted, 12-bit and 9-bit
 
 **How many millivolts is one 12-bit step?**
 
 > _Answer:_
->
+>One 12-bit step is approximately 0.806 mV. Step size = 3300/4095 = 0.8059mV  
 
 **The knob was still. Why did `raw` move?**
 
-> _Answer:_
+> _Answer:raw moved due to analog noise, electrical interference on the breadboard, slight voltage ripple on the 3.3V power rail, and inherent ADC sampling jitter on the RP2040. Because each step is extremely small (~0.81 mV), even sub-millivolt noise causes the lowest bits of the reading to fluctuate._
 >
 
 **Did the 9-bit value jump less? Why?**
 
-> _Answer:_
+> _Answer:Yes. Bit-shifting right by 3 bits (raw >> 3) divides the value by $2^3 = 8$, which effectively discards the 3 least significant (lowest) bits. Because the noise jitter was small enough to fit within those lower 3 bits, removing them filters out the small fluctuations and produces a stable reading._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename:_ pot_adc.cpp
 >
 
 *Read more (optional): Programming Embedded Systems, Sect. 13.1.4.1 ("Analog circuits"):
@@ -106,34 +106,34 @@ number.
 
 | Normal light | Covered | Your threshold |
 |---|---|---|
-| | | |
+|77 |720 | 398.5|
 
 ### Checklist
 
-- [ ] TODO 1 filled in; the LED turns on in the dark
-- [ ] Threshold set from your own numbers
-- [ ] LED checked with `raw` near the threshold
-- [ ] TODO 2 filled in; the RGB LED glows blue when dark
-- [ ] TODO 3 filled in; the colours change when dark
+- [x] TODO 1 filled in; the LED turns on in the dark
+- [x] Threshold set from your own numbers
+- [x] LED checked with `raw` near the threshold
+- [x] TODO 2 filled in; the RGB LED glows blue when dark
+- [x] TODO 3 filled in; the colours change when dark
 
 **Why two thresholds? What would `is_dark = raw > DARK_THRESHOLD;` do in step 5?**
 
-> _Answer:_
+> _Answer:_ Two thresholds create hysteresis (a deadband). In step 5, when raw sits right near DARK_THRESHOLD, natural ADC noise causes raw to rapidly jump back and forth across a single threshold value. With is_dark = raw > DARK_THRESHOLD;, the LED would rapidly flicker on and off. Using two thresholds prevents this flickering.
 >
 
 **Between the two thresholds, what does the LED do?**
 
-> _Answer:_
+> _Answer:_ The LED maintains its previous state (it stays ON if it was already ON, and stays OFF if it was already OFF). Because neither the if nor the else if condition triggers when raw falls in the gap between the two thresholds, is_dark keeps its current value.
 >
 
 **The ADC has several inputs. Which line picks the sensor's?**
 
-> _Answer:_
+> _Answer:_ adc_select_input(LIGHT_ADC_INPUT); (which passes 1 to select ADC channel 1 connected to GP27).
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename:_ light_led.cpp
 >
 
 ---
@@ -176,46 +176,46 @@ Use `constexpr` for constants instead.
 
 ### Checklist
 
-- [ ] TODO 1 and 2 filled in; `double_value(3 + 4)` prints 14
-- [ ] TODO 3 filled in; the GP7 LED works
-- [ ] Plain `if` error read (step 8)
-- [ ] `EXERCISE` set to 2, 3 and deleted
-- [ ] `DEBUG_MODE` turned off
+- [x] TODO 1 and 2 filled in; `double_value(3 + 4)` prints 14
+- [x] TODO 3 filled in; the GP7 LED works
+- [x] Plain `if` error read (step 8)
+- [x] `EXERCISE` set to 2, 3 and deleted
+- [x] `DEBUG_MODE` turned off
 
 **What did `DOUBLE(3 + 4)` print? Write the text the preprocessor made.**
 
-> _Answer:_
+> _Answer:_ It printed 11. The preprocessor made the text 3 + 4 * 2. Because multiplication takes operator precedence over addition, it evaluated as $3 + (4 \times 2) = 11$.
 >
 
 **Why does `double_value(3 + 4)` give 14?**
 
-> _Answer:_
+> _Answer:_ double_value is a proper C++ function. C++ evaluates the argument expression (3 + 4) first—producing 7—and then passes 7 into the function, calculating $7 \times 2 = 14$.
 >
 
 **Say you had kept `#define LED_PIN 7`. What would `int LED_PIN {5};` inside a function
 turn into? Why is that a problem?**
 
-> _Answer:_
+> _Answer:_ It would turn into int 7 {5};. This is a compilation error because 7 is a literal integer value, not a valid variable identifier name.
 >
 
 **What was the error in step 8? Why does `#if` avoid it?**
 
-> _Answer:_
+> _Answer:_ The error was a missing symbol/driver compiler error for cyw43_arch_gpio_put. A standard C++ if statement requires both branches to be compiled into the program regardless of runtime conditions. #if avoids it because preprocessor directives strip out the unselected code blocks entirely before the compiler ever sees them.
 >
 
 **You deleted `#define EXERCISE`. Which error came first? Why?**
 
-> _Answer:_
+> _Answer:_ The #error "EXERCISE must be 1 or 2" preprocessor error came first. In preprocessor conditional directives (#if), an undefined macro evaluates to 0. Since 0 is neither 1 nor 2, the preprocessor hit the #else branch and triggered #error. Because the preprocessor runs before the compiler, this halted compilation before C++ scope checks occurred.
 >
 
 **`DEBUG_MODE` is off. Where did the printing code go?**
 
-> _Answer:_
+> _Answer:_ It was completely removed by the preprocessor before compilation. When DEBUG_MODE is not defined, DEBUG_LOG(...) expands to empty text, so no printing instructions or string literals exist in the compiled binary.
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename:_ macros.cpp
 >
 
 *Read more (optional): Beginning C++17, Chapter 10 ("Defining Preprocessor Macros",
