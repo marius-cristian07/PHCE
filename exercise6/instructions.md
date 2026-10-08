@@ -65,35 +65,35 @@ That is why `level` prints 256, not 255, with the knob fully right.
 
 | Knob | `raw` | `level` | duty cycle |
 |---|---|---|---|
-| fully left | | | |
-| middle | | | |
-| fully right | | | |
+| fully left |12 |0 | 0|
+| middle |2048 |128 | 50|
+| fully right |4095 |256 |100 |
 
 ### Checklist
 
-- [ ] TODO 1, 2 and 3 filled in; the knob dims the LED
-- [ ] Table filled in
-- [ ] 12-bit version tried (step 5)
+- [x] TODO 1, 2 and 3 filled in; the knob dims the LED
+- [x] Table filled in
+- [x] 12-bit version tried (step 5)
 
 **Why shift by 4? What would shifting left do?**
 
-> _Answer:_
+> _Answer: _We shift right by 4 because the ADC gives a 12-bit value (0–4095), but PWM uses 8 bits (0–255). Shifting right by 4 divides the value by 16, making it fit. Shifting left would multiply the value by 16, making it too large for the PWM range.
 >
 
 **The system clock runs at 125 MHz. One period is `wrap + 1` counts. How many periods
 per second with `wrap` 255? Could you see it blink?**
 
-> _Answer:_
+> _Answer: _One period has 256 counts, so: 125,000,000 / 256=488,281.25 HZ. That is approximately 488,281 periods per second. We cannot see the LED blinking because the frequency is much too high for the human eye.
 >
 
 **What changed with 12 bits in step 5? Why?**
 
-> _Answer:_
+> _Answer: With 12 bits, the LED brightness can be controlled more precisely because we have 4096 levels instead of 256. The brightness changes are smaller and smoother, especially at low brightness. This happens because we use the full ADC value without shifting it. The PWM frequency also becomes 16 times lower. _
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: pwm_led.cpp_
 >
 
 *Read more (optional): Real-Time C++, Sect. 9.4 ("A Software PWM Template Class"),
@@ -139,30 +139,30 @@ parameter names.
 
 ### Checklist
 
-- [ ] TODO 1-3 filled in; the knob dims the LED
-- [ ] Destructor seen: LED off, `Dimmer destroyed` printed
-- [ ] `const` error read (step 5)
-- [ ] Jobs of `Dimmer` listed (step 6)
+- [x] TODO 1-3 filled in; the knob dims the LED
+- [x] Destructor seen: LED off, `Dimmer destroyed` printed
+- [x] `const` error read (step 5)
+- [x] Jobs of `Dimmer` listed (step 6)
 
 **In what order did `Dimmer created`, `Dimmer destroyed` and `main() is done` print?
 Why there?**
 
-> _Answer:_
+> _Answer: First Dimmer created, then Dimmer destroyed, and finally main() is done. This happens because the constructor runs when the object is created, the destructor runs when the object goes out of scope after 10 seconds, and then the program continues executing main()._
 >
 
 **What was the error in step 5? Why does `print_level()` need `level()` to be `const`?**
 
-> _Answer:_
+> _Answer: The compiler gave an error because print_level() receives a const Dimmer&, but level() was not marked as const. A const object can only call const member functions, so we need to add const to level() to promise that it won't modify the object._
 >
 
 **Which jobs does `Dimmer` do? What goes wrong with a second `Dimmer` on GP27?**
 
-> _Answer:_
+> _Answer: The Dimmer class initializes the ADC and PWM, reads the sensor, calculates the brightness, controls the LED, and prints the values. With a second Dimmer on GP27, both objects would share the same ADC hardware. Each constructor selects its ADC input, so the second object would change the input used by the first one. As a result, both objects could read the same sensor instead of their own._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: dimmer_class.cpp_
 >
 
 *Read more (optional): Beginning C++17, Chapter 11 ("Classes and Object-Oriented
@@ -216,43 +216,43 @@ One folder per namespace is usual; here all files share one, to keep it simple.
 
 ### Checklist
 
-- [ ] All files added; the project builds
-- [ ] TODO 1 and 2 filled in; the knob dims the LED
-- [ ] Namespace error read (step 6)
-- [ ] Reuse question answered (step 7)
+- [x] All files added; the project builds
+- [x] TODO 1 and 2 filled in; the knob dims the LED
+- [x] Namespace error read (step 6)
+- [x] Reuse question answered (step 7)
 
 **Why does `Potentiometer::read()` select its input every time? What would break without
 it, with two pots?**
 
-> _Answer:_
+> _Answer: The Pico has one ADC shared between multiple input pins. Each time we read a potentiometer, we need to select its input. Without this, two potentiometers could read from the same ADC channel, giving incorrect values._
 >
 
 **What was the first error in step 6? What did the compiler suggest?**
 
-> _Answer:_
+> _Answer: The compiler gave an error saying PwmLed was not declared in this scope. It suggested using hw::PwmLed because the class belongs to the hw namespace._
 >
 
 **`ADC_TO_PWM_SHIFT` sits in a namespace without a name in `application.cpp`. Who can use
 it?**
 
-> _Answer:_
+> _Answer: Only code inside application.cpp can use ADC_TO_PWM_SHIFT. The anonymous namespace keeps it private to that source file, so other files cannot access it directly._
 >
 
 **`MAX_LEVEL` is `static`. How can you write `hw::PwmLed::MAX_LEVEL` without any `PwmLed`
 object? Where could `Application` use it?**
 
-> _Answer:_
+> _Answer: Because MAX_LEVEL is static, it belongs to the class itself rather than an individual object. We can access it using hw::PwmLed::MAX_LEVEL without creating an object. Application could use it when calculating or limiting the LED brightness._
 >
 
 **For the light-sensor LED, which classes can you reuse as they are? What would you
 change?**
 
-> _Answer:_
+> _Answer: We can reuse PwmLed and Potentiometer without changing their code. We would create another LED object with a different PWM pin and another sensor object using GP27. We could also reuse Application if we want the light sensor to control brightness in the same way. If we want different behavior, we would change the brightness calculation in Application._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: dimmer_multi folder_
 >
 
 *Read more (optional): Beginning C++17, Chapter 10 ("Namespaces"). Chapter 11

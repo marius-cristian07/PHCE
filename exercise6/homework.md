@@ -30,25 +30,25 @@ the objects `main()` creates.
 
 ### Checklist
 
-- [ ] Three classes, with all members, `+`/`-` and types
-- [ ] `MAX_LEVEL` and `MAX_VALUE` underlined
-- [ ] Namespaces `hw` and `app` in the class names; two arrows from `Application`
-- [ ] Three objects, names underlined, with values; two links from `application`
-- [ ] Both `.png` committed
+- [x] Three classes, with all members, `+`/`-` and types
+- [x] `MAX_LEVEL` and `MAX_VALUE` underlined
+- [x] Namespaces `hw` and `app` in the class names; two arrows from `Application`
+- [x] Three objects, names underlined, with values; two links from `application`
+- [x] Both `.png` committed
 
 **Why does `PwmLed` have no arrow to `Potentiometer`?**
 
-> _Answer:_
+> _Answer: Because PwmLed only controls the LED brightness and doesn't need to know anything about the potentiometer. The Application class connects them by reading the potentiometer and setting the LED brightness._
 >
 
 **Why are `MAX_LEVEL` and `MAX_VALUE` not in the object diagram?**
 
-> _Answer:_
+> _Answer: Because they are static members, meaning they belong to the class itself and are shared by all objects. The object diagram only shows the values stored in each individual object._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: ex4.png_
 >
 
 *Read more (optional): Beginning C++17, Chapter 11 ("Static Members of a Class").
