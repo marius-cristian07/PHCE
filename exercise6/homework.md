@@ -78,18 +78,19 @@ the LED off. `toggle()` switches the LED: on becomes off, off becomes on.
 
 ### Checklist
 
-- [ ] Every member from the diagram, with the right `+`/`-`
-- [ ] `is_on()` is `const`; the constructor is `explicit`
-- [ ] The LED blinks; the Serial Monitor shows `on` and `off`
+- [x] Every member from the diagram, with the right `+`/`-`
+- [x] `is_on()` is `const`; the constructor is `explicit`
+- [x] The LED blinks; the Serial Monitor shows `on` and `off`
 
 **What does `explicit` stop? Write one line it would make fail.**
 
-> _Answer:_
+> _Answer: explicit prevents the constructor from automatically converting an integer into a Led object.
+For example, Led led = 7; would fail because implicit conversion is not allowed._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: led_class.cpp_
 >
 
 ---
