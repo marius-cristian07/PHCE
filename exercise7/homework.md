@@ -35,37 +35,37 @@ Adding 1 to `a/b` gives `(a + b)/b`.
 
 | Line | Your output |
 |---|---|
-| `-f`, then `f` | |
-| `++f`, then `f` | |
-| `f++`, then `f` | |
-| `--f`, then `f` | |
-| `f--`, then `f` | |
+| `-f`, then `f` |-3/4, then 3/4 |
+| `++f`, then `f` | 7/4, then 7/4|
+| `f++`, then `f` | 7/4, then 11/4|
+| `--f`, then `f` | 7/4, then 7/4|
+| `f--`, then `f` | 7/4, then 3/4|
 
 ### Checklist
 
-- [ ] TODO 1-4 filled in; the table filled in
-- [ ] `-f` leaves `f` as it is
-- [ ] The postfix forms use the prefix forms
+- [x] TODO 1-4 filled in; the table filled in
+- [x] `-f` leaves `f` as it is
+- [x] The postfix forms use the prefix forms
 
 **Why does `f++` show the old value? Why must postfix return a copy, not a reference?**
 
-> _Answer:_
+> _Answer: f++ shows the old value because it saves a copy of the fraction before increasing it. It must return a copy because the original fraction changes, and returning a reference would give us the updated value instead of the old one._
 >
 
 **Why is `operator-` `const`, but `operator++` is not?**
 
-> _Answer:_
+> _Answer: operator- is const because it creates a new negative fraction without changing the original. operator++ is not const because it modifies the numerator of the existing fraction by adding the denominator._
 >
 
 **Add `show("f   = ", Fraction {1, 0});` and run. What do you get? Why does `reduce()` not
 stop it? How could the constructor protect the class?**
 
-> _Answer:_
+> _Answer: The program may crash or stop working because the denominator is zero, causing division by zero in reduce(). The reduce() function doesn't prevent this because it doesn't check whether the denominator is zero before dividing. The constructor could protect the class by checking if the denominator is zero and rejecting invalid fractions, for example by throwing std::invalid_argument._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: fraction_unary.cpp_
 >
 
 *Read more (optional): Beginning C++17, Chapter 12 ("Overloading Unary Operators",
@@ -97,24 +97,24 @@ the starter.
 
 ### Checklist
 
-- [ ] TODO 5 and 6 filled in
-- [ ] `show()` uses `<<`; `print()` is gone
-- [ ] Same output as before
+- [x] TODO 5 and 6 filled in
+- [x] `show()` uses `<<`; `print()` is gone
+- [x] Same output as before
 
 **Change `operator<<` to return `void` and build. What is the error for TODO 6? Why?
 Then change it back.**
 
-> _Answer:_
+> _Answer: The compiler reports an error because we cannot chain << operators anymore. When operator<< returns void, it doesn't return the stream needed for the next << operation. Returning std::ostream& allows multiple outputs to be chained together in one statement._
 >
 
 **Why does `operator<<` write into `stream`, not into `std::cout`?**
 
-> _Answer:_
+> _Answer: It writes into stream so the operator can work with different output streams, not just std::cout. For example, we could print a fraction to a file or a string stream. This makes the operator more flexible and reusable._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: fraction_unary.cpp_
 >
 
 ---
