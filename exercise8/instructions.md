@@ -33,37 +33,37 @@ one base class, `Sensor`.
 
 ### Checklist
 
-- [ ] TODO 1-3 filled in; all four sensors print
-- [ ] The light value goes down when you cover the sensor
-- [ ] Error read (step 8)
+- [x] TODO 1-3 filled in; all four sensors print
+- [x] The light value goes down when you cover the sensor
+- [x] Error read (step 8)
 
 **`Potentiometer` has no `name()`, but `sensor.name()` works for it. Where does it come
 from? Which functions does `Potentiometer` write itself?**
 
-> _Answer:_
+> _Answer: name() is inherited from the base class Sensor, through AdcSensor. The Potentiometer class implements its own constructor, read(), and unit() functions. It inherits name() from Sensor and read_raw() from AdcSensor_
 >
 
 **`print_sensor()` only knows `const hw::Sensor&`. How does it call the right `read()`?
 Could it call `read_raw()`? Why not?**
 
-> _Answer:_
+> _Answer: It uses runtime polymorphism. Since read() is a virtual function in Sensor, C++ automatically calls the correct implementation depending on the actual sensor object. It cannot call read_raw() because that function is protected in AdcSensor and is not part of the public Sensor interface._
 >
 
 **What was the first error in step 8? Without the word `override`, what would the
 compiler have said, and where?**
 
-> _Answer:_
+> _Answer: The error was that LightSensor::read() was marked override but did not override the base class function because const was missing. Without override, the compiler would not detect that mismatch at the declaration. It would instead report errors elsewhere, such as the definition in analog_sensors.cpp not matching the declaration and LightSensor remaining an abstract class when instantiated in main()._
 >
 
 **`Button` is not an `AdcSensor`. What did `main()` need to print it with the others? Did
 `print_sensor()` change?**
 
-> _Answer:_
+> _Answer: main() only needed to create a Button object and add its pointer to the Sensor pointer array. print_sensor() did not need any changes because Button inherits from Sensor and implements the same virtual functions, read() and unit(). This demonstrates polymorphism._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: Exercise1_
 >
 
 *Read more (optional): Beginning C++17, Chapter 13 ("Inheritance in Classes", "Deriving
@@ -97,31 +97,31 @@ Abstract"), pp. 71-72.*
 
 ### Checklist
 
-- [ ] TODO 1-3 filled in
-- [ ] The scan shows the devices
-- [ ] Temperature and humidity print; breath makes the humidity go up
-- [ ] Wrong address tried (step 8)
+- [x] TODO 1-3 filled in
+- [x] The scan shows the devices
+- [x] Temperature and humidity print; breath makes the humidity go up
+- [x] Wrong address tried (step 8)
 
 **Which addresses did the scan find? Which one is the SHTC3? What could the other one
 be?**
 
-> _Answer:_
+> _Answer: The expected addresses include 0x70 for the SHTC3 temperature and humidity sensor and possibly 0x3C or 0x3D for the OLED display. Both devices communicate through the same I2C bus. The exact addresses found depend on the Serial Monitor output._
 >
 
 **What did step 8 print? Which function reported the problem?**
 
-> _Answer:_
+> _Answer: Step 8 printed "measure failed" because the sensor address was changed from 0x70 to 0x71. The I2cBus::write() function detected the communication failure and returned false. This caused send_command() and then measure() to return false, which made main() print the error message._
 >
 
 **Why does `main()` make the bus, and not `Shtc3`'s constructor? What goes wrong if each
 device makes its own `I2cBus`?**
 
-> _Answer:_
+> _Answer: main() creates the I2C bus so multiple devices can share the same connection. The Shtc3 constructor receives a reference to that bus instead of creating a new one. If every device created its own I2cBus, they could repeatedly initialize the same hardware controller and pins, causing conflicts. Sharing one bus avoids this problem and makes the code more efficient and organized._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: Exercise2_
 >
 
 *Read more (optional): Beginning C++17, Chapter 13 ("Inheritance vs. Aggregation"), and
@@ -151,29 +151,29 @@ Relationships"), pp. 72-74.*
 
 ### Checklist
 
-- [ ] TODO 1 and 2 filled in; the OLED shows temperature and humidity
+- [x] TODO 1 and 2 filled in; the OLED shows temperature and humidity
 
 **Comment out `display.show()` and run. What does the screen show? Why do drawing and
 sending happen in two steps?**
 
-> _Answer:_
+> _Answer: The screen stays blank or shows the previous image because draw_text() only modifies the memory buffer, while display.show() sends that buffer to the OLED. These operations are separated so we can prepare the entire image before updating the screen, reducing unnecessary I2C communication and avoiding partially updated images._
 >
 
 **`Shtc3` and `Ssd1306` both hold an `I2cBus&`. Should they share a base class, like the
 sensors in Exercise 1? Should `Ssd1306` derive from `Sensor`? Why?**
 
-> _Answer:_
+> _Answer: No, they shouldn't share a base class just because they both use I2C. They have different responsibilities: Shtc3 measures temperature and humidity, while Ssd1306 displays information. Ssd1306 should not inherit from Sensor because it isn't a sensor and doesn't implement the read() and unit() functions. Sharing a bus is not a reason for inheritance._
 >
 
 **`Ssd1306` owns `buffer_` and only uses `bus_`. Which one is composition, which one is
 aggregation?**
 
-> _Answer:_
+> _Answer: buffer_ represents composition because it belongs directly to Ssd1306 and its lifetime is tied to the display object. bus_ represents aggregation because Ssd1306 only holds a reference to an existing I2cBus object created in main(). The bus exists independently and can be shared with other devices._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: Exercise3_
 >
 
 *Read more (optional): Beginning C++17, Chapter 13 ("Inheritance vs. Aggregation").

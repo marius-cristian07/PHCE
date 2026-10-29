@@ -34,46 +34,46 @@ With `virtual` (step 5):
 
 | Line | On the object | Through `check()` |
 |---|---|---|
-| `buzzer` `describe()` | | |
-| `buzzer` `self_test()` | | |
-| `button` `describe()` | | |
-| `button` `self_test()` | | |
+| `buzzer` `describe()` |makes a sound |a device |
+| `buzzer` `self_test()` | 	beep|	beep |
+| `button` `describe()` | reads a press|a device |
+| `button` `self_test()` | press me|press me |
 
 Without `virtual` (step 7):
 
 | Line | On the object | Through `check()` |
 |---|---|---|
-| `buzzer` `describe()` | | |
-| `buzzer` `self_test()` | | |
-| `button` `describe()` | | |
-| `button` `self_test()` | | |
+| `buzzer` `describe()` |makes a sound |a device |
+| `buzzer` `self_test()` | beep|no test |
+| `button` `describe()` | reads a press|a device |
+| `button` `self_test()` | press me|no test |
 
 ### Checklist
 
-- [ ] TODO 1-3 filled in; both tables filled in
-- [ ] Errors read (step 6)
-- [ ] `virtual` and `override` back in
+- [x] TODO 1-3 filled in; both tables filled in
+- [x] Errors read (step 6)
+- [x] `virtual` and `override` back in
 
 **Through `check()`, why does `buzzer` give a different `describe()` than on the object?
 Which type picks the function: the type of the reference, or of the object?**
 
-> _Answer:_
+> _Answer: Because describe() is not virtual, C++ selects the function based on the type of the reference, not the actual object. Inside check(), the reference is const Device&, so it calls Device::describe() instead of Buzzer::describe(). When called directly on the buzzer object, it uses Buzzer::describe()._
 >
 
 **What were the errors in step 6? What do they protect you from?**
 
-> _Answer:_
+> _Answer: The compiler reported that Buzzer::self_test() and Button::self_test() were marked override but did not override any virtual function. This happened because we removed virtual from Device::self_test(). These errors protect us from accidentally defining functions that don't correctly override the base class functions._
 >
 
 **What is the difference between inheritance and polymorphism in this example? Use
 `name()` and `self_test()` to explain.**
 
-> _Answer:_
+> _Answer: Inheritance allows Buzzer and Button to reuse name() from the Device class without implementing it themselves. Polymorphism allows check() to call the correct self_test() implementation depending on the actual object, even though it only receives a Device& reference. Inheritance reuses functionality, while polymorphism allows different objects to behave differently through the same interface._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: Exercise4_
 >
 
 *Read more (optional): Beginning C++17, Chapter 14 ("Calling Inherited Functions",
@@ -112,47 +112,53 @@ print a line when they are made and when they are gone.
 
 ### Checklist
 
-- [ ] TODO 1-3 filled in
-- [ ] Both variants print `heating: yes`
-- [ ] Lifetimes marked (step 7)
+- [x] TODO 1-3 filled in
+- [x] Both variants print `heating: yes`
+- [x] Lifetimes marked (step 7)
 
 **In the IT variant, `main()` calls `it.set(COLD_CELSIUS)`. Why does that compile? Why is it odd
 for a thermostat?**
 
-> _Answer:_
+> _Answer: It compiles because InheritingThermostat inherits from FakeSensor, including its set() function. This is odd because a thermostat is supposed to control heating using a sensor, not be a sensor itself. It should read temperature from a separate sensor instead of setting its own temperature._
 >
 
 **When `ct` is gone, which `gone` lines print? Why is the sensor still there?**
 
-> _Answer:_
+> _Answer: When ct is destroyed, only Heater gone prints because the thermostat owns the heater. The FakeSensor remains alive because it was created separately in main() and ct only holds a reference to it. FakeSensor gone prints later, when the sensor goes out of scope._
 >
 
 **In Exercise 2, someone writes `class Shtc3 : public I2cBus`. It would work. Why is it still wrong? What
 could code that holds an `Shtc3` do then?**
 
-> _Answer:_
+> _Answer: It is wrong because an SHTC3 is a sensor, not an I2C bus. Inheritance would incorrectly make it an I2C bus and expose functions such as read(), write(), and probe(). Code holding an Shtc3 could then use it to communicate directly with other I2C devices, which is not its responsibility. It should use an existing bus through aggregation._
 >
 
 **You want two thermostats on one sensor. Can the IT variant do it? Can the CT variant? How?**
 
-> _Answer:_
+> _Answer: The IT variant cannot naturally share one sensor because each InheritingThermostat contains its own inherited FakeSensor object. The CT variant can share one sensor because both thermostats can store references to the same FakeSensor object._
 >
 
 **Fill in for the CT variant: `ComposingThermostat` and `Heater` are composition /
 aggregation. `ComposingThermostat` and `FakeSensor` are composition / aggregation. Why?**
 
-> _Answer:_
+> _Answer: ComposingThermostat and Heater have a composition relationship because the thermostat owns the heater, and the heater is destroyed when the thermostat is destroyed.
+
+ComposingThermostat and FakeSensor have an aggregation relationship because the thermostat only stores a reference to an existing sensor. The sensor is not owned by the thermostat and can exist independently._
 >
 
 **What is the difference between inheritance, aggregation and composition? Give one
 example of each from this session.**
 
-> _Answer:_
+> _Answer: Inheritance represents an is-a relationship, where a class inherits functionality from another class. Example: Buzzer inherits from Device in Exercise 4.
+
+Composition represents an owning has-a relationship, where one object contains another and controls its lifetime. Example: ComposingThermostat owns a Heater in Exercise 5.
+
+Aggregation represents a non-owning uses-a relationship, where an object uses another independently existing object. Example: Shtc3 holds a reference to I2cBus in Exercise 2._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: Exercise5_
 >
 
 ---
