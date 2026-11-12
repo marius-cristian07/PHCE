@@ -8,7 +8,7 @@
 
 constexpr std::uint32_t SDA_PIN {4};
 constexpr std::uint32_t SCL_PIN {5};
-constexpr std::uint32_t I2C_BAUDRATE {400'000};  // 400 kHz
+constexpr std::uint32_t I2C_BAUDRATE {100'000};  // 100 kHz
 constexpr std::uint32_t UPDATE_MS {2000};
 
 // addresses below 0x08 and above 0x77 are reserved
@@ -37,6 +37,11 @@ int main()
 
     // main owns the bus. It hands it to each device that needs it.
     hw::I2cBus bus {i2c0, SDA_PIN, SCL_PIN, I2C_BAUDRATE};
+    if (!bus.is_free())
+    {
+        std::cout << "I2C bus is stuck. Take the power off the Pico and the PicoBricks, "
+                  << "then put it back." << std::endl;
+    }
 
     // the bus goes in through the constructor
     hw::Shtc3 sensor {bus};

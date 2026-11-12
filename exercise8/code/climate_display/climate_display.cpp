@@ -12,7 +12,7 @@
 
 constexpr std::uint32_t SDA_PIN {4};
 constexpr std::uint32_t SCL_PIN {5};
-constexpr std::uint32_t I2C_BAUDRATE {400'000};  // 400 kHz
+constexpr std::uint32_t I2C_BAUDRATE {100'000};  // 100 kHz
 constexpr std::uint32_t UPDATE_MS {2000};
 
 constexpr int DECIMALS {1};
@@ -37,6 +37,11 @@ int main()
 
     // one bus, two devices on it
     hw::I2cBus bus {i2c0, SDA_PIN, SCL_PIN, I2C_BAUDRATE};
+    if (!bus.is_free())
+    {
+        std::cout << "I2C bus is stuck. Take the power off the Pico and the PicoBricks, "
+                  << "then put it back." << std::endl;
+    }
     hw::Shtc3 sensor {bus};
     // the same bus goes into the display
     hw::Ssd1306 display {bus};
