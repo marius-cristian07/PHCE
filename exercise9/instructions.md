@@ -31,35 +31,51 @@ See [`homework.md`](homework.md).
 
 ### Checklist
 
-- [ ] TODO 1-3 filled in
-- [ ] The bar and the number follow the knob, from 0 % to 100 %
+- [x] TODO 1-3 filled in
+- [x] The bar and the number follow the knob, from 0 % to 100 %
 
 **Write down each class in the `gui` namespace and its base class. Which of them can't
 be made as an object? Why?**
 
-> _Answer:_
+> _Answer: - Widget → no base class
+- Shape → inherits from Widget
+- Rectangle → inherits from Shape
+- Text → inherits from Widget
+- Label → inherits from Text
+- ProgressBar → inherits from Widget
+- Screen → no base class
+
+Widget, Shape, and Text cannot be instantiated because they are abstract classes. Widget has a pure virtual draw() function (= 0), which Shape and Text inherit without implementing._
 >
 
 **`ProgressBar` and `Widget`, `ProgressBar` and `Label`: which pair is inheritance, which
 is composition? Why does `ProgressBar` not derive from `Rectangle`?**
 
-> _Answer:_
+> _Answer: - ProgressBar → Widget: Inheritance, because ProgressBar is a type of Widget.
+- ProgressBar → Label: Composition, because ProgressBar contains a Label object.
+ProgressBar doesn't inherit from Rectangle because it is not a rectangle. It is a complex widget made from a label and two rectangles. This is a has-a relationship, rather than an is-a relationship._
 >
 
 **`Rectangle::draw()` uses `x()`, not `x_`. Why?**
 
-> _Answer:_
+> _Answer: Because x_ is a private member of the Widget class, so derived classes cannot access it directly. The public getter x() provides access to its value while maintaining encapsulation._
 >
 
 **The loop in `main()` only knows `const gui::Widget*`. How many `draw()` functions run
 for one frame? Name them.**
 
-> _Answer:_
+> _Answer: Five draw() calls execute per frame:
+1. Label::draw() — draws the title "Potentiometer".
+2. ProgressBar::draw() — draws the complete progress bar.
+3. Label::draw() — draws the percentage text.
+4. Rectangle::draw() — draws the bar's border.
+5. Rectangle::draw() — draws the filled portion.
+Although the loop only knows Widget*, runtime polymorphism ensures the correct draw() implementation is called for each object._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: Exercise1_
 >
 
 *Read more (optional): Beginning C++17, Chapter 13 ("Inheritance vs. Aggregation",
@@ -107,46 +123,49 @@ pp. 69-70, and Sect. 4.7 ("Class Relationships"), pp. 72-74.*
 
 | | Dynamic: loop over `widgets` | Static: `draw_all()` |
 |---|---|---|
-| Time for 1000 frames (us) | | |
-| Time for one frame (us) | | |
+| Time for 1000 frames (us) |77306 |77130 |
+| Time for one frame (us) |77306 |77130 |
 
 | | `Rectangle` | `Label` | `ProgressBar` |
 |---|---|---|---|
-| `sizeof` (bytes) | | | |
+| `sizeof` (bytes) |24 |36 |100 |
 
 ### Checklist
 
-- [ ] `draw_all()` added; TODO 1-2 filled in
-- [ ] Both tables filled in
-- [ ] The dot shows on the screen during the countdown
-- [ ] Error read (step 8)
+- [x] `draw_all()` added; TODO 1-2 filled in
+- [x] Both tables filled in
+- [x] The dot shows on the screen during the countdown
+- [x] Error read (step 8)
 
 **How big is the difference for one frame? Is `virtual` expensive in this program? Where
 does the time of a frame go?**
 
-> _Answer:_
+> _Answer: The difference is 0.176 µs per frame (77.306 µs dynamic vs. 77.130 µs static), approximately 0.23%. Therefore, virtual is not expensive in this program. Most of the time is spent drawing rectangles and text into the OLED's pixel buffer, rather than selecting which draw() function to call. The actual I2C screen transfer is not included in these measurements._
 >
 
 **What was the error in step 8? Why can `draw_all()` draw a `Dot`, but `widgets` can't
 hold one?**
 
-> _Answer:_
->
+> _Answer: The compiler reported that Dot* cannot be converted to const gui::Widget*. This happens because Dot does not inherit from Widget. The draw_all() template works because it only requires the object to have a compatible draw() function, while the widgets array requires objects derived from Widget._
+> 
 
 **`draw_all()` is called with `(title, bar, frame)` and with `(dot)`. How many functions
 does the compiler make from the template? What are their parameters?**
 
-> _Answer:_
+> _Answer: The compiler creates two template specializations:
+1. draw_all(const Label&, const ProgressBar&, const Rectangle&)
+2. draw_all(const Dot&)
+Each specialization is generated for the particular argument types provided._
 >
 
 **What can the loop over `widgets` do that `draw_all()` can't?**
 
-> _Answer:_
+> _Answer: The loop can handle a collection of different derived widgets through base-class pointers, even when their exact types are only known at runtime. It can also process a changing number of widgets without changing the calling code. In contrast, draw_all() requires the argument types and number of arguments to be known at compile time._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: Exercise2_
 >
 
 *Read more (optional): Beginning C++17, Chapter 9 ("Function Templates", "Creating
@@ -181,43 +200,49 @@ Curiously Recurring Template Pattern (CRTP).
 
 | | Exercise 2 | Exercise 3 |
 |---|---|---|
-| `draw_all()`, time for 1000 frames (us) | | |
-| `sizeof(gui::Rectangle)` (bytes) | | |
-| `sizeof(gui::Label)` (bytes) | | |
-| `sizeof(gui::ProgressBar)` (bytes) | | |
+| `draw_all()`, time for 1000 frames (us) |77130 |77131 |
+| `sizeof(gui::Rectangle)` (bytes) |24 |20 |
+| `sizeof(gui::Label)` (bytes) |36 |32 |
+| `sizeof(gui::ProgressBar)` (bytes) |100 |84 |
 
 ### Checklist
 
-- [ ] TODO 1-2 filled in
-- [ ] The screen counts down from 100 s and the bar shrinks
-- [ ] Table filled in
+- [x] TODO 1-2 filled in
+- [x] The screen counts down from 100 s and the bar shrinks
+- [x] Table filled in
 
 **How does `Widget<Derived>::draw()` reach `Rectangle::draw_widget()` without `virtual`?
 When is the function picked: when the program is built, or when it runs?**
 
-> _Answer:_
+> _Answer: CRTP uses static_cast<const Derived*>(this) to convert the base-class pointer into a pointer to the derived class (Rectangle). It then calls Rectangle::draw_widget() directly. The function is selected at compile time, not runtime, because the compiler already knows the derived type through the template._
 >
 
 **How many bytes did each class lose? What was in those bytes? Why did `ProgressBar` lose
 the most?**
 
-> _Answer:_
+> _Answer: - Rectangle: 24 → 20 bytes (4 bytes saved).
+- Label: 36 → 32 bytes (4 bytes saved).
+- ProgressBar: 100 → 84 bytes (16 bytes saved).
+The removed bytes were mainly virtual function pointers (vptrs), used to support runtime polymorphism. ProgressBar saved the most because it contains its own widget base plus a Label and two Rectangle objects, eliminating four vptrs in total._
 >
 
 **What is the base class of `Label`? Of `Rectangle`? Can one `std::array` of base class
 pointers hold `title`, `bar` and `frame`, like `widgets` in Exercise 1? Why?**
 
-> _Answer:_
->
+> _Answer: Label inherits from Text Label, while Rectangle inherits from Shape Rectangle. Both eventually inherit from their own Widget Derived specialization.
+
+No, a single array of base-class pointers cannot hold all three because Widget Label, Widget Rectangle, and Widget ProgressBar are different types. Unlike Exercise 1, there is no common non-template Widget base class.
 
 **Was CRTP faster? Give one reason to pick `virtual`, and one to pick CRTP.**
 
-> _Answer:_
+> _Answer: CRTP was not measurably faster: 77,131 µs versus 77,130 µs for 1,000 frames, a negligible difference.
+- Pick virtual: When you need runtime flexibility, such as storing different derived objects in one collection through base-class pointers.
+- Pick CRTP: When you want to reduce memory usage and avoid virtual dispatch overhead, especially in embedded systems._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: Exercise3_
 >
 
 *Read more (optional): Beginning C++17, Chapter 16 ("Understanding Class Templates",

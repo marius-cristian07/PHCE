@@ -27,39 +27,39 @@ The starter is [`code/average.cpp`](code/average.cpp).
 
 | Call | Returns `double` | Returns `T` |
 |---|---|---|
-| `average(2, 4, 7)` | | |
-| `average(2.5, 4.5, 6.5)` | | |
+| `average(2, 4, 7)` |4.33333 |4 |
+| `average(2.5, 4.5, 6.5)` |4.5	 |4.5	 |
 
 ### Checklist
 
-- [ ] TODO 1-3 filled in; table filled in
-- [ ] Error read (step 5)
-- [ ] The return type is `double` again
+- [x] TODO 1-3 filled in; table filled in
+- [x] Error read (step 5)
+- [x] The return type is `double` again
 
 **What is `T` in `average(2, 4, 7)`? In `average(2.5, 4.5, 6.5)`? Who picks it? How many
 functions does the compiler make from the template in step 3?**
 
-> _Answer:_
+> _Answer: In average(2, 4, 7), T is int. In average(2.5, 4.5, 6.5), T is double. The compiler automatically determines T from the argument types through template argument deduction. It creates two function specializations, one for int and one for double._
 >
 
 **Why does `average()` return `double` and not `T`? What happened in step 4?**
 
-> _Answer:_
+> _Answer: It returns double to preserve decimal values, even when the inputs are integers. In step 4, changing the return type to T caused integer results to be truncated. For example, average(2, 4, 7) returned 4 instead of 4.33333, because T was int._
 >
 
 **What was the error in step 5? Why does `average<double>(1, 2.5, 3)` build?**
 
-> _Answer:_
->
+> _Answer: The compiler couldn't deduce a single type T because the arguments contained both int and double. Using average double explicitly sets T to double, allowing the integers to be implicitly converted to doubles, so the function compiles._
+> 
 
 **Which types work as `T`? What must a type be able to do?**
 
-> _Answer:_
+> _Answer: Numeric types such as int, float, and double work as T. A type must support addition (+) between its values, and the sum must support division by COUNT (a double). The resulting value must also be convertible to double, since that is the function's return type._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: Exercise4_
 >
 
 *Read more (optional): Beginning C++17, Chapter 9 ("Function Templates", "Creating
@@ -95,52 +95,56 @@ class template, `Device<Derived>`. `Buzzer` derives from `Device<Buzzer>`:
 
 | Line | On the object | Through `check()` |
 |---|---|---|
-| `buzzer` `describe()` | | |
-| `buzzer` `self_test()` | | |
-| `button` `describe()` | | |
-| `button` `self_test()` | | |
+| `buzzer` `describe()` |makes a sound |a device |
+| `buzzer` `self_test()` | beep|beep |
+| `button` `describe()` |reads a press |a device |
+| `button` `self_test()` |press me |press me |
 
 | | Session 8, `virtual` | Session 9, class template |
 |---|---|---|
-| `sizeof(Buzzer)` (bytes) | | |
+| `sizeof(Buzzer)` (bytes) |28 bytes |24 bytes |
 
 ### Checklist
 
-- [ ] TODO 1-3 filled in; both tables filled in
-- [ ] Session 8 size measured (step 6)
+- [x] TODO 1-3 filled in; both tables filled in
+- [x] Session 8 size measured (step 6)
 
 **Compare the first table with your "With `virtual`" table from Session 8. What is the
 same? What does the work of `virtual` here?**
 
-> _Answer:_
+> _Answer: Both versions produce the same results: describe() calls the base-class version through check(), while self_test() calls the derived class's implementation. In Session 8, virtual selects the correct self_test() at runtime. In Exercise 5, CRTP achieves the same behavior using static_cast at compile time._
 >
 
 **Session 8 had one `check(const Device&)`. How many `check()` functions does the
 compiler make here? What are their parameters?**
 
-> _Answer:_
+> _Answer: The compiler creates two specializations of check():
+- check(const Device Buzzer&)
+- check(const Device Button&)
+Each specialization is generated for a different template argument._
 >
 
 **Session 8 could keep a `Buzzer` and a `Button` in one array of `const Device*`. Can
 this version? Why?**
 
-> _Answer:_
+> _Answer: No, because Device Buzzer and Device Button are different template specializations with no common non-template base class. Therefore, they cannot both be stored in a single array of const Device* pointers like in Session 8._
 >
 
 **Which `Buzzer` is smaller? By how much? What is gone?**
 
-> _Answer:_
+> _Answer: The CRTP version is smaller: 24 bytes compared to 28 bytes in the virtual version, saving 4 bytes (14.3%). The hidden virtual function table pointer (vptr) is no longer needed because CRTP uses compile-time dispatch._
 >
 
 **Give one thing the `virtual` version does better, and one thing the class template
 version does better.**
 
-> _Answer:_
+> _Answer: The virtual version provides better runtime flexibility, allowing different derived objects to be stored and accessed through common base-class pointers.
+The class template (CRTP) version provides better memory efficiency by eliminating virtual function pointers and allowing compile-time dispatch._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: Exercise 5_
 >
 
 ---
