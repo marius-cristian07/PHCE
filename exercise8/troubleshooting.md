@@ -64,6 +64,13 @@ it does not answer.
 
 TODO 2 is missing: `temperature_` and `humidity_` are never set.
 
+## `I2C bus is stuck` prints, or the program stops after `started`
+
+A device on the PicoBricks holds an I2C line low, and the clock pulses that `I2cBus`
+sends at the start did not free it. Unplug the USB cables of the Pico and the PicoBricks,
+wait a few seconds and plug them in again. A reset or a new flash does not help. If the program stops without a message, you have the old `i2c_bus.cpp`: see
+[`BUGFIX.md`](BUGFIX.md).
+
 ## `climate_display`: the OLED stays dark
 
 1. TODO 1 is missing: `show()` returns `false` and sends nothing.
