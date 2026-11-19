@@ -40,32 +40,32 @@ function template, and switch levels off at compile time.
    line.
 ### Checklist
 
-- [ ] TODO 1-3 filled in
-- [ ] A warning and an error seen, both ways
-- [ ] With both levels at warning, no `DEBUG` or `INFO` line shows
-- [ ] The typo tried both ways and removed
+- [x] TODO 1-3 filled in
+- [x] A warning and an error seen, both ways
+- [x] With both levels at warning, no `DEBUG` or `INFO` line shows
+- [x] The typo tried both ways and removed
 
 **Which lines were gone in step 8? For each way: what takes a message that is switched
 off out of the program?**
 
-> _Answer:_
+> _Answer: The DEBUG lines (measuring) and the INFO lines (temperature and humidity) disappeared from both loggers. For the C-style macros, the preprocessor expands disabled log calls to nothing. For the C++ template, the compiler uses if constexpr to discard the printing block for levels below Warning._
 >
 
 **In `logging::log<Severity::Info>(...)` the level is a template argument. Why can't it
 be a normal argument, like `logging::log(Severity::Info, ...)`?**
 
-> _Answer:_
+> _Answer: if constexpr needs a condition the compiler can evaluate at compile time. With log<Severity::Info>(...), Level is a template argument, so the compiler knows its value when it creates that version of the function. A normal parameter like level can be used with a regular if, but it can’t be used in this if constexpr condition, even if the caller passes Severity::Info directly._
 >
 
 **Step 9: which line built with the typo, and which did not? Why? Which one do you want
 in a real project?**
 
-> _Answer:_
+> _Answer:C_LOG_DEBUG("%d", smaple); built because the preprocessor removed the disabled macro call along with smaple. logging::log<Severity::Debug>("%d", smaple); failed because the compiler still checks the arguments at the call site and smaple is undeclared. I’d use the C++ template in a real project because it catches mistakes in log arguments even when that log level is disabled. _
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: Exercise1_
 >
 
 *Read more (optional): Beginning C++17, Chapter 10 ("Defining Preprocessor Macros",
@@ -115,37 +115,39 @@ and with an exception, and measure what each one costs.
 
 | | Exceptions off (step 6) | Exceptions on (step 10) |
 |---|---|---|
-| `text` (bytes) | | |
-| 1000 failed reads with `Result` (us) | | |
-| 1000 failed reads with exceptions (us) | - | |
+| `text` (bytes) |23696 |81840 |
+| 1000 failed reads with `Result` (us) |122229 | 122,236 µs|
+| 1000 failed reads with exceptions (us) | - |216,226 µs |
 
 ### Checklist
 
-- [ ] TODO 1-2 filled in
-- [ ] `outside` prints `error, no answer` and `caught, no answer`
-- [ ] Table filled in
+- [x] TODO 1-2 filled in
+- [x] `outside` prints `error, no answer` and `caught, no answer`
+- [x] Table filled in
 
 **How many bytes did the exceptions add to `text`? How much longer does one failed read
 take with an exception than with `Result`?**
 
-> _Answer:_
+> _Answer: Exceptions added 58,144 bytes to text (81,840 − 23,696). In the exceptions-enabled build, one failed read took 93.99 µs longer on average with an exception than with Result ((216,226 − 122,236) ÷ 1,000)._
 >
 
 **Look at the first line of `read_temperature()` and of `read_temperature_or_throw()`.
 Which one shows that it can fail? What must the caller do in each case?**
 
-> _Answer:_
+> _Answer: read_temperature() shows that it can fail through its return type, hw::Result<float, hw::Error>. The caller checks ok() before reading value() on success or error() on failure.
+
+read_temperature_or_throw() declares a return type of float. The caller can wrap the call in try and catch SensorError, or let the exception propagate to a handler higher up._
 >
 
 **Give one reason to pick exceptions, and one to pick `Result`, for a program on the
 Pico.**
 
-> _Answer:_
+> _Answer: Pick exceptions when several operations can fail and you want one catch block to handle those failures. Pick Result when firmware size matters. In this exercise, the Result-only build used 58,144 fewer bytes of text._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: Exercise_
 >
 
 *Read more (optional): Beginning C++17, Chapter 15 ("Handling Errors", "Understanding
@@ -184,36 +186,36 @@ the log.
 
 | | Without the watchdog (step 4) | With the watchdog (step 8) |
 |---|---|---|
-| The next line after `stuck` | | |
-| Seconds from `stuck` to that line | - | |
+| The next line after `stuck` |	No further output during the 10-second wait |	[C++ WARN ] the watchdog reset the Pico |
+| Seconds from `stuck` to that line | - |Your measured time from stuck to the warning |
 
 ### Checklist
 
-- [ ] TODO 1-3 filled in
-- [ ] After `stuck`, the Pico starts again by itself and logs a warning
-- [ ] Table filled in; `UPDATE_MS` is 1000 again
+- [x] TODO 1-3 filled in
+- [x] After `stuck`, the Pico starts again by itself and logs a warning
+- [x] Table filled in; `UPDATE_MS` is 1000 again
 
 **What did the Pico do after `stuck` in step 4, and in step 8? How long did step 8 take?
 Where does that time come from?**
 
-> _Answer:_
+> _Answer: In step 4, the Pico stayed in the infinite loop after printing stuck. It produced no further output until it was restarted manually. In step 8, the watchdog reset the Pico automatically. It printed the watchdog reset the Pico and resumed taking sensor readings. The reset is expected roughly 2 seconds after stuck during normal operation. The 3-second timeout starts at the last watchdog_update(), and about one second has already passed by the time the program wakes up and sees the button press. Use your measured time in the worksheet if you timed it._
 >
 
 **After a reset, how does the program know that the watchdog did it? Why is that worth a
 warning?**
 
-> _Answer:_
+> _Answer: At startup, watchdog_caused_reboot() checks the reset reason recorded by the hardware. A watchdog reset is worth a warning because the program went too long without reaching watchdog_update(). The warning lets you see that something interrupted normal operation even after the Pico has recovered._
 >
 
 **What happened in step 9? Nothing was stuck. What must be true for `UPDATE_MS` and
 `WATCHDOG_MS`?**
 
-> _Answer:_
+> _Answer: With UPDATE_MS = 5000 and WATCHDOG_MS = 3000, the Pico repeatedly reset during its normal five-second sleep. The timer expired before the program could wake up and update it again. WATCHDOG_MS must be longer than the longest normal gap between calls to watchdog_update(), including the sleep and the time spent checking the button, reading the sensor, and printing._
 >
 
 **Attached file(s):**
 
-> _Filename:_
+> _Filename: Exercise3_
 >
 
 *Read more (optional): Real-Time C++, Sect. 8.1 ("The Startup Code"), pp. 155-157, and
